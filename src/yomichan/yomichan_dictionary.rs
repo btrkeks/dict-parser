@@ -36,13 +36,8 @@ impl YomichanDictionary {
     }
 
     fn extract_metadata(archive: &mut ZipArchive<File>) -> Result<YomichanDictionaryMetaData> {
-        let mut index_file = archive.by_name("index.json")?;
-
-        let mut buffer = Vec::new();
-        index_file.read_to_end(&mut buffer)?;
-
-        let metadata: YomichanDictionaryMetaData = serde_json::from_slice(&buffer)?;
-        Ok(metadata)
+        let index_file = archive.by_name("index.json")?;
+        Ok(serde_json::from_reader(index_file)?)
     }
 
     pub fn get_name(&self) -> &str {

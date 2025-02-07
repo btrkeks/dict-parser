@@ -12,7 +12,7 @@ impl<'a> YomichanTermBankEntryIterator<'a> {
     pub fn new(archive: &'a mut ZipArchive<File>) -> Self {
         Self {
             term_bank_files_iterator: TermBankFilesIterator::new(archive),
-            current_entries: parse_term_bank_from_string("[]").unwrap().into_iter(), // empty term bank
+            current_entries: Vec::new().into_iter(),
         }
     }
 }
