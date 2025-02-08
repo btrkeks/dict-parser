@@ -53,6 +53,7 @@ impl<'a> Iterator for YomichanTermBankEntryIterator<'a> {
 mod tests {
     use super::*;
     use std::fs::File;
+    use std::hint::black_box;
 
     #[test]
     fn test_correctly_parses_term_bank_from_string() {
@@ -61,7 +62,7 @@ mod tests {
         let mut term_bank_files_iterator = TermBankFilesIterator::new(&mut archive);
 
         while let Some(json_string) = term_bank_files_iterator.next() {
-            let _parsed = parse_term_bank_from_string(&json_string).unwrap();
+            black_box(parse_term_bank_from_string(&json_string).unwrap());
         }
     }
 }
