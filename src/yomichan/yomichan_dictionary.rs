@@ -66,7 +66,7 @@ mod tests {
     #[test]
     fn test_correctly_parses_term_bank() {
         let mut dictionary = YomichanDictionary::from_path("jitendex-yomitan.zip").unwrap();
-        dictionary.term_banks_entries().count();
+        println!("Entry count: {}", dictionary.term_banks_entries().count());
     }
 }
 
