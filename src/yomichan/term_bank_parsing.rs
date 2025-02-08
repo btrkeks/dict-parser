@@ -41,7 +41,8 @@ impl From<YomichanTermBankEntryArray> for YomichanTermBankEntry {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
+#[serde(from = "YomichanTermBankEntryArray")]
 pub struct YomichanTermBankEntry {
     /// The text for the term (e.g. "犬")
     term: String,
@@ -98,8 +99,7 @@ pub enum Definition {
 }
 
 pub(crate) fn parse_term_bank_from_string(term_bank: &str) -> anyhow::Result<Vec<YomichanTermBankEntry>> {
-    let entries: Vec<YomichanTermBankEntryArray> = serde_json::from_str(term_bank)?;
-    Ok(entries.into_iter().map(|e| e.into()).collect())
+    Ok(serde_json::from_str(term_bank)?)
 }
 
 #[cfg(test)]
