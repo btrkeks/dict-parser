@@ -1,13 +1,12 @@
 use anyhow::Result;
 use std::fs::{File};
-use std::io::Read;
 use std::path::{Path};
 use serde::Deserialize;
 use zip::ZipArchive;
 use crate::yomichan::term_bank_iterator::{YomichanTermBankEntryIterator};
 use crate::yomichan::term_bank_parsing::YomichanTermBankEntry;
 
-#[derive(Debug, Deserialize)]
+#[derive(Default, Debug, Deserialize)]
 pub struct YomichanDictionaryMetaData {
     title: String,
     revision: String,
@@ -36,8 +35,10 @@ impl YomichanDictionary {
     }
 
     fn extract_metadata(archive: &mut ZipArchive<File>) -> Result<YomichanDictionaryMetaData> {
-        let index_file = archive.by_name("index.json")?;
-        Ok(serde_json::from_reader(index_file)?)
+        // let index_file = archive.by_name("index.json")?;
+        // Ok(serde_json::from_reader(index_file)?)
+        // TODO
+        Ok(YomichanDictionaryMetaData::default())
     }
 
     pub fn get_name(&self) -> &str {

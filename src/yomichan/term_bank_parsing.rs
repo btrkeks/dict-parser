@@ -1,6 +1,7 @@
-use std::str::FromStr;
-use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 use crate::yomichan::structured_content::StructuredDefinition;
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct YomichanTermBankEntryArray(
@@ -45,23 +46,23 @@ impl From<YomichanTermBankEntryArray> for YomichanTermBankEntry {
 #[serde(from = "YomichanTermBankEntryArray")]
 pub struct YomichanTermBankEntry {
     /// The text for the term (e.g. "犬")
-    term: String,
+    pub term: String,
     /// Reading of the term, or an empty string if the reading is the same as the term (e.g. "いぬ")
-    reading: String,
+    pub reading: String,
     /// Tags for the definition (e.g. "⭐"). References a tag in the tag bank.
-    definition_tags: Vec<String>,
+    pub definition_tags: Vec<String>,
     /// Rule identifiers for the definition which can be used to validate deinflection.
     /// Empty for words which aren't inflected.
-    rules: Vec<DeinfletionRule>,
+    pub rules: Vec<DeinfletionRule>,
     /// Score used to determine popularity.
     /// Negative values are more rare and positive values are more frequent.
-    score: i64,
+    pub score: i64,
     /// Array of definitions for the term.
-    definitions: Vec<Definition>,
+    pub definitions: Vec<Definition>,
     /// Sequence number for the term.
-    sequence_number: i64,
+    pub sequence_number: i64,
     /// Tags for the term
-    term_tags: Vec<String>,
+    pub term_tags: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -95,11 +96,26 @@ impl FromStr for DeinfletionRule {
 pub enum Definition {
     Plain(String),
     Structured(StructuredDefinition),
-    Deinflection((String, Vec<String>))
+    Deinflection((String, Vec<String>)),
 }
 
-pub(crate) fn parse_term_bank_from_string(term_bank: &str) -> anyhow::Result<Vec<YomichanTermBankEntry>> {
-    Ok(serde_json::from_str(term_bank)?)
+impl Default for Definition {
+    fn default() -> Self {
+        Definition::Plain(String::default())
+    }
+}
+
+impl Display for Definition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // TODO
+        write!(f, "<definition>")
+    }
+}
+
+pub(crate) fn parse_term_bank_from_string(
+    term_bank: &str,
+) -> anyhow::Result<Vec<YomichanTermBankEntry>> {
+    Ok(sonic_rs::from_str(term_bank)?)
 }
 
 #[cfg(test)]
@@ -223,19 +239,18 @@ mod tests {
                 },
                 "content": "noun"
               }"##;
-        let parsed: StructuredContentObject = serde_json::from_str(string).unwrap();
+        let parsed: StructuredContentObject = sonic_rs::from_str(string).unwrap();
     }
 
     #[test]
     fn test_parse_structured_content_object_4() {
         let string = r##"{"tag": "tr","content":[{"tag": "td"},{"tag":"th"}]}"##;
-        let parsed: StructuredContentObject = serde_json::from_str(string).unwrap();
+        let parsed: StructuredContentObject = sonic_rs::from_str(string).unwrap();
     }
 
     #[test]
     fn test_parse_structured_content_object_5() {
-        let string =
-            r#"[
+        let string = r#"[
       {
         "type": "structured-content",
         "content": {
@@ -262,7 +277,7 @@ mod tests {
         ]
       ]
     ]"#;
-        let parsed: Vec<Definition> = serde_json::from_str(string).unwrap();
+        let parsed: Vec<Definition> = sonic_rs::from_str(string).unwrap();
 
         match &parsed[1] {
             Definition::Deinflection((s, d)) => {
