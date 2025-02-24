@@ -8,18 +8,20 @@ pub struct TermBankFilesIterator<'a, R: Read + Seek> {
     i: usize,
     archive: &'a mut ZipArchive<R>,
     error: Option<ZipError>,
-    // Buffer used to store the contents of the current file.
-    buf: String,
+    buf: Vec<u8>,
 }
 
 impl<'a, R: Read + Seek> TermBankFilesIterator<'a, R> {
     pub fn new(archive: &'a mut ZipArchive<R>) -> Self {
+        // Preallocate a reasonably sized buffer (1MB)
+        let buf = Vec::with_capacity(1024 * 1024);
+
         Self {
             term_bank_indices: Self::term_bank_indices(archive),
             i: 0,
             archive,
             error: None,
-            buf: String::new(),
+            buf,
         }
     }
 
@@ -42,7 +44,8 @@ impl<'a, R: Read + Seek> TermBankFilesIterator<'a, R> {
 }
 
 impl<'a, R: Read + Seek> Iterator for TermBankFilesIterator<'a, R> {
-    type Item = String;
+    // Return Vec<u8> instead of String to avoid UTF-8 validation overhead
+    type Item = Vec<u8>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i >= self.term_bank_indices.len() {
@@ -54,14 +57,25 @@ impl<'a, R: Read + Seek> Iterator for TermBankFilesIterator<'a, R> {
 
         match self.archive.by_index(archive_index) {
             Ok(mut file) => {
+                let size = file.size() as usize;
+
+                // Clear and resize buffer - reuse allocation
                 self.buf.clear();
-
-                if let Err(e) = file.read_to_string(&mut self.buf) {
-                    self.error = Some(e.into());
-                    return None;
+                if self.buf.capacity() < size {
+                    self.buf.reserve(size - self.buf.capacity());
                 }
+                self.buf.resize(size, 0);
 
-                Some(std::mem::take(&mut self.buf))
+                match file.read_exact(&mut self.buf) {
+                    Ok(_) => {
+                        // Create a new Vec from our buffer - unavoidable but cheaper than String conversion
+                        Some(self.buf.clone())
+                    }
+                    Err(e) => {
+                        self.error = Some(e.into());
+                        None
+                    }
+                }
             }
             Err(e) => {
                 self.error = Some(e.into());
@@ -72,7 +86,7 @@ impl<'a, R: Read + Seek> Iterator for TermBankFilesIterator<'a, R> {
 }
 
 #[inline]
-fn is_term_bank_file(file: &ZipFile) -> bool {
+pub fn is_term_bank_file(file: &ZipFile) -> bool {
     let filename = file.name();
     filename.ends_with(".json") && filename.starts_with("term_bank_")
 }

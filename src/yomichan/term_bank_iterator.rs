@@ -3,7 +3,7 @@ use std::fs::File;
 use std::vec;
 use zip::result::ZipError;
 use zip::ZipArchive;
-use crate::yomichan::term_bank_parsing::{parse_term_bank_from_string, YomichanTermBankEntry};
+use crate::yomichan::term_bank_parsing::{parse_term_bank_from_bytes, YomichanTermBankEntry};
 
 pub struct YomichanTermBankEntryIterator<'a> {
     term_bank_files_iterator: TermBankFilesIterator<'a, File>,
@@ -33,16 +33,21 @@ impl<'a> Iterator for YomichanTermBankEntryIterator<'a> {
                 return Some(entry);
             }
 
-            let json_string = match self.term_bank_files_iterator.next() {
-                Some(s) => s,
+            let json_bytes = match self.term_bank_files_iterator.next() {
+                Some(bytes) => bytes,
                 None => return None,
             };
 
-            match parse_term_bank_from_string(&json_string) {
-                Ok(entries) => self.current_entries = entries.into_iter(),
-                Err(e) => {
-                    // TODO: Log error.
-                    return  None;
+            // Parse directly from bytes
+            match parse_term_bank_from_bytes(&json_bytes) {
+                Ok(entries) => {
+                    // Preallocate capacity for better performance
+                    let mut vec = Vec::with_capacity(entries.len());
+                    vec.extend(entries);
+                    self.current_entries = vec.into_iter();
+                }
+                Err(_) => {
+                    continue; // TODO: Error handling
                 }
             }
         }
@@ -62,7 +67,7 @@ mod tests {
         let mut term_bank_files_iterator = TermBankFilesIterator::new(&mut archive);
 
         while let Some(json_string) = term_bank_files_iterator.next() {
-            black_box(parse_term_bank_from_string(&json_string).unwrap());
+            black_box(parse_term_bank_from_bytes(&json_string).unwrap());
         }
     }
 }
