@@ -1,5 +1,6 @@
+//! A Rust library for parsing dictionary files, with a focus on Yomichan dictionaries.
+//!
+//! This library provides functionality to iterate through entries in a dictionary,
+//! which can be used to build databases for fast lookup.
+
 pub mod yomichan;
-// TODO: We might implement our own abstract dictionary entry type.
-//       The user could then call a function iterate_dictionary(path_to_dict) -> impl Iterator<Item=DictionaryEntry>.
-//       The iterator should return None on error and the user should afterwards be able to
-//       check if there were any errors

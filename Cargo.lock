@@ -214,7 +214,6 @@ name = "dict-parser"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bumpalo",
  "rayon",
  "serde",
  "serde_json",

@@ -3,9 +3,17 @@ name = "dict-parser"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "profile_test"
+path = "src/bin/profile_test.rs"
+
 [dependencies]
 zip = "2.2.2"
 anyhow = "1.0.95"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.133"
 sonic-rs = "0.3"
+rayon = "1.8.0"
+
+[profile.release]
+debug = true
